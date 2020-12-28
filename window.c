@@ -33,6 +33,7 @@ static void sortie(void);
 static surface_t * _quad = NULL;
 /*!\brief une surface représentant un cube */
 static surface_t * _cube = NULL;
+static surface_t * _sphere = NULL; //sphere qui fera office de pacman
 /*!\brief variable pour changer de vue, 0 -> isométrique ; 1 -> dessus */
 static int _vue = 0;
 /*!\brief le labyrinthe */
@@ -41,7 +42,8 @@ static unsigned int * _laby = NULL;
 static int lW = 21;
 /*!\brief la hauteur du labyrinthe */
 static int lH = 21;
-
+static vec3 _ball = {0, 0, 0.84f};
+int state = 0; // variable state qui va nous permettre de nous deplacer
 /*!\brief paramètre l'application et lance la boucle infinie. */
 int main(int argc, char ** argv) {
   /* tentative de création d'une fenêtre pour GL4Dummies */
@@ -73,12 +75,13 @@ int main(int argc, char ** argv) {
 /*!\brief init de nos données, spécialement les trois surfaces
  * utilisées dans ce code */
 void init(void) {
-  vec4 g = {0.7f, 0.7f, 0.7f, 1}, b = {0.1f, 0.1f, 0.7f, 1} ;
+  vec4 j = {1.0f, 1.0f, 0.0f, 0.0f}, g = {0.7f, 0.7f, 0.7f, 1}, b = {0.1f, 0.1f, 0.7f, 1} ;
   /* on créé nos deux types de surfaces */
   _quad   =   mkQuad();       /* ça fait 2 triangles        */
   _cube   =   mkCube();       /* ça fait 2x6 triangles      */
+  _sphere = mkSphere(12,4);
   /* on change les couleurs de surfaces */
-  _quad->dcolor = g; _cube->dcolor = b;
+  _quad->dcolor = g; _cube->dcolor = b;_sphere->dcolor = j;
   /* on leur rajoute la texture au cube */
   setTexId(  _quad, getTexFromBMP("images/tex.bmp"));// 
   setTexId(  _cube, getTexFromBMP("images/tex2.bmp"));
@@ -88,6 +91,7 @@ void init(void) {
   /* on active l'ombrage */
   enableSurfaceOption(  _quad, SO_USE_LIGHTING);
   enableSurfaceOption(  _cube, SO_USE_LIGHTING);
+  enableSurfaceOption(_sphere, SO_USE_LIGHTING);
   _laby = labyrinth(lW, lH);
   /* mettre en place la fonction à appeler en cas de sortie */
   atexit(sortie);
@@ -135,6 +139,22 @@ void draw(void) {
       translate(nmv, 0.0f, 1.0f, 0.0f);
       transform_n_raster(_cube, nmv, projMat);
     }
+  memcpy(nmv, mvMat, sizeof nmv); //affichage du pacman
+  translate(nmv, _ball.x, 0, _ball.y);
+  translate(nmv, -10.0f, 1.0f, 6.0f);
+  transform_n_raster(_sphere, nmv, projMat);
+  if(state == 0){ // pour chaque state le pacman va avancer dans une direction
+    _ball.y -= 0.04f;
+  }
+  if(state == 1){
+    _ball.x += 0.04f;
+  }
+  if(state == 2){
+    _ball.y += 0.04f;
+  }
+  if(state == 3){
+    _ball.x -= 0.04f;
+  }
   /* déclarer qu'on a changé (en bas niveau) des pixels du screen  */
   gl4dpScreenHasChanged();
   /* fonction permettant de raffraîchir l'ensemble de la fenêtre*/
@@ -144,6 +164,36 @@ void draw(void) {
 /*!\brief intercepte l'événement clavier pour modifier les options. */
 void key(int keycode) {
   switch(keycode) {
+  case GL4DK_RIGHT: // ici on va definir pour la touche droite du clavier un state 
+    if (state == 1){ // et si le pacman est daja dans un autre state autre que 0 on va lui assigner un state specifique
+      state = 2;
+      break;
+    }
+    if (state == 2){
+      state = 3;
+      break;
+    }
+    if (state == 3){
+      state = 0;
+      break;
+    }
+    state = 1;
+    break;
+  case GL4DK_LEFT: // pareille pour la touche gauche
+    if (state == 1){
+      state = 0;
+      break;
+    }
+    if (state == 2){
+      state = 1;
+      break;
+    }
+    if (state == 3){
+      state = 2;
+      break;
+    }
+    state = 3;
+    break;
   case GL4DK_v: /* 'v' changer de vue */
     _vue = !_vue;
     break;
@@ -161,6 +211,10 @@ void sortie(void) {
   if(_cube) {
     freeSurface(_cube);
     _cube = NULL;
+  }
+  if(_sphere) {
+    freeSurface(_sphere);
+    _sphere = NULL;
   }
   /* on libère le labyrinthe */
   free(_laby);
