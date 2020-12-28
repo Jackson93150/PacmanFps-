@@ -156,7 +156,6 @@ extern "C" {
   extern surface_t * mkQuad(void);  
   extern surface_t * mkCube(void);
   extern surface_t * mkSphere(int longitudes, int latitudes);
-  extern surface_t * mkSphere2(int longitudes, int latitudes);
 
 #  ifdef __cplusplus
 }

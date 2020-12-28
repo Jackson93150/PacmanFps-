@@ -28,11 +28,16 @@ static void init(void);
 static void draw(void);
 static void key(int keycode);
 static void sortie(void);
-
+double CubeVx[192]; // vecteur dans lequel on va stocker toute les position x des cubes
+double CubeVy[192]; // vecteur dans lequel on va stocker toute les position y des cubes
+double a = 0;
+double a2 = 0;
+int x = 192; 
 /*!\brief une surface représentant un quadrilatère */
 static surface_t * _quad = NULL;
 /*!\brief une surface représentant un cube */
 static surface_t * _cube = NULL;
+static surface_t * _cube2 = NULL;
 static surface_t * _sphere = NULL; //sphere qui fera office de pacman
 /*!\brief variable pour changer de vue, 0 -> isométrique ; 1 -> dessus */
 static int _vue = 0;
@@ -42,13 +47,14 @@ static unsigned int * _laby = NULL;
 static int lW = 21;
 /*!\brief la hauteur du labyrinthe */
 static int lH = 21;
-static vec3 _ball = {0, 0, 0.84f};
+static vec3 _ball = {-10.2, 0, 6.0f};
+static vec3 _test = {-4.0, 0, 6.0f};
 int state = 0; // variable state qui va nous permettre de nous deplacer
 /*!\brief paramètre l'application et lance la boucle infinie. */
 int main(int argc, char ** argv) {
   /* tentative de création d'une fenêtre pour GL4Dummies */
   if(!gl4duwCreateWindow(argc, argv, /* args du programme */
-			 "Mon moteur de rendu <<Maison>>", /* titre */
+			 "Pacman3D", /* titre */
 			 10, 10, 500, 500, /* x, y, largeur, heuteur */
 			 GL4DW_SHOWN) /* état visible */) {
     /* ici si échec de la création souvent lié à un problème d'absence
@@ -80,18 +86,22 @@ void init(void) {
   _quad   =   mkQuad();       /* ça fait 2 triangles        */
   _cube   =   mkCube();       /* ça fait 2x6 triangles      */
   _sphere = mkSphere(12,4);
+  _cube2   =   mkCube();
   /* on change les couleurs de surfaces */
-  _quad->dcolor = g; _cube->dcolor = b;_sphere->dcolor = j;
+  _quad->dcolor = g; _cube->dcolor = b;_sphere->dcolor = j;_cube2->dcolor = g;
   /* on leur rajoute la texture au cube */
-  setTexId(  _quad, getTexFromBMP("images/tex.bmp"));// 
-  setTexId(  _cube, getTexFromBMP("images/tex2.bmp"));
+  setTexId(  _quad, getTexFromBMP("images/sol.bmp"));
+  setTexId(  _cube, getTexFromBMP("images/mur.bmp"));
+  setTexId(  _sphere, getTexFromBMP("images/pacman.bmp"));
   /* on active l'utilisation de la texture pour le cube */
   enableSurfaceOption(  _quad, SO_USE_TEXTURE);
   enableSurfaceOption(  _cube, SO_USE_TEXTURE);
+  enableSurfaceOption(  _sphere, SO_USE_TEXTURE);
   /* on active l'ombrage */
   enableSurfaceOption(  _quad, SO_USE_LIGHTING);
   enableSurfaceOption(  _cube, SO_USE_LIGHTING);
   enableSurfaceOption(_sphere, SO_USE_LIGHTING);
+  enableSurfaceOption(  _cube2, SO_USE_LIGHTING);
   _laby = labyrinth(lW, lH);
   /* mettre en place la fonction à appeler en cas de sortie */
   atexit(sortie);
@@ -100,7 +110,9 @@ void init(void) {
 /*!\brief la fonction appelée à chaque display. */
 void draw(void) {
   int i, j;
+  int rst = -1;
   float mvMat[16], projMat[16], nmv[16];
+  int z = 0;
   //static float angle = 0.0f;
   /* effacer l'écran et le buffer de profondeur */
   gl4dpClearScreen();
@@ -136,13 +148,38 @@ void draw(void) {
       if(_laby[(i + lH / 2) * lW + j + lW / 2] == 0)continue;
       memcpy(nmv, mvMat, sizeof nmv); /* copie mvMat dans nmv */
       translate(nmv, 2 * j, 0, 2 * i); /* pourquoi *2 ? */
+      a = 2 * j; // a va etre = a la position x et a2 a la position y
+      a2 = 2 * i;
+      CubeVx[z] = a; // et on va stocker a et a2 dans leur vecteur correspondant
+      CubeVy[z] = a2;
+      z += 1;
       translate(nmv, 0.0f, 1.0f, 0.0f);
       transform_n_raster(_cube, nmv, projMat);
     }
   memcpy(nmv, mvMat, sizeof nmv); //affichage du pacman
-  translate(nmv, _ball.x, 0, _ball.y);
-  translate(nmv, -10.0f, 1.0f, 6.0f);
+  translate(nmv, _ball.x, 1.0f, _ball.y);
   transform_n_raster(_sphere, nmv, projMat);
+
+  memcpy(nmv, mvMat, sizeof nmv); //affichage du pacman
+  translate(nmv, _test.x, 1.0f, _test.y);
+  transform_n_raster(_cube2, nmv, projMat);
+  for (i = 0 ; i < x ; i ++){
+    if (_ball.x + 1.7 >= CubeVx[i] && _ball.x - 1.7 <= CubeVx[i] && _ball.y + 1.7 >= CubeVy[i] && _ball.y -1.7 <= CubeVy[i]){ // range de la collison
+      rst = state;
+      if(rst == 0){ // pour chaque collision on regarde dans quel state le pacman se trouvais avant la collision
+        state = 2; // et on renvoie le state opposer a celui 
+      }             // cette methode reste buguer en attente d'étre corriger
+      if(rst == 2){
+        state = 0;
+      }
+      if(rst == 1){
+        state = 3;
+      }
+      if(rst == 3){
+        state = 1;
+      }
+    }
+  }
   if(state == 0){ // pour chaque state le pacman va avancer dans une direction
     _ball.y -= 0.04f;
   }
@@ -154,6 +191,10 @@ void draw(void) {
   }
   if(state == 3){
     _ball.x -= 0.04f;
+  }
+  if(state == 4){
+    _ball.x += 0.0f;
+    _ball.y += 0.0f;
   }
   /* déclarer qu'on a changé (en bas niveau) des pixels du screen  */
   gl4dpScreenHasChanged();
@@ -201,6 +242,8 @@ void key(int keycode) {
   }
 }
 
+
+
 /*!\brief à appeler à la sortie du programme. */
 void sortie(void) {
   /* on libère nos 2 surfaces */
@@ -215,6 +258,10 @@ void sortie(void) {
   if(_sphere) {
     freeSurface(_sphere);
     _sphere = NULL;
+  }
+  if(_cube2) {
+    freeSurface(_cube2);
+    _cube2 = NULL;
   }
   /* on libère le labyrinthe */
   free(_laby);
