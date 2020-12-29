@@ -47,6 +47,7 @@ static unsigned int * _laby = NULL;
 static int lW = 21;
 /*!\brief la hauteur du labyrinthe */
 static int lH = 21;
+int col = 0; // variable dans l'aquel on va stocker les states pendant une collision
 static vec3 _ball = {-10.2, 0, 6.0f};
 static vec3 _test = {-4.0, 0, 6.0f};
 int state = 0; // variable state qui va nous permettre de nous deplacer
@@ -85,7 +86,7 @@ void init(void) {
   /* on créé nos deux types de surfaces */
   _quad   =   mkQuad();       /* ça fait 2 triangles        */
   _cube   =   mkCube();       /* ça fait 2x6 triangles      */
-  _sphere = mkSphere(12,4);
+  _sphere = mkSphere(12,2);
   _cube2   =   mkCube();
   /* on change les couleurs de surfaces */
   _quad->dcolor = g; _cube->dcolor = b;_sphere->dcolor = j;_cube2->dcolor = g;
@@ -110,7 +111,6 @@ void init(void) {
 /*!\brief la fonction appelée à chaque display. */
 void draw(void) {
   int i, j;
-  int rst = -1;
   float mvMat[16], projMat[16], nmv[16];
   int z = 0;
   //static float angle = 0.0f;
@@ -160,23 +160,24 @@ void draw(void) {
   translate(nmv, _ball.x, 1.0f, _ball.y);
   transform_n_raster(_sphere, nmv, projMat);
 
-  memcpy(nmv, mvMat, sizeof nmv); //affichage du pacman
+  memcpy(nmv, mvMat, sizeof nmv); 
   translate(nmv, _test.x, 1.0f, _test.y);
   transform_n_raster(_cube2, nmv, projMat);
   for (i = 0 ; i < x ; i ++){
     if (_ball.x + 1.7 >= CubeVx[i] && _ball.x - 1.7 <= CubeVx[i] && _ball.y + 1.7 >= CubeVy[i] && _ball.y -1.7 <= CubeVy[i]){ // range de la collison
-      rst = state;
-      if(rst == 0){ // pour chaque collision on regarde dans quel state le pacman se trouvais avant la collision
-        state = 2; // et on renvoie le state opposer a celui 
-      }             // cette methode reste buguer en attente d'étre corriger
-      if(rst == 2){
-        state = 0;
+      col = state; // on stock le state dans la variable col
+      state = 4; // on passe au state 4 qui nous fige
+      if(col == 0){ // on regarde le state dans laquel on était durant la collision
+        _ball.y += 0.05f; // et on deplace la balle dans du cote opposer du state en sorte que la balle ne soit plus en collision
       }
-      if(rst == 1){
-        state = 3;
+      if(col == 1){
+        _ball.x -= 0.05f;
       }
-      if(rst == 3){
-        state = 1;
+      if(col == 2){
+        _ball.y -= 0.05f;
+      }
+      if(col == 3){
+        _ball.x += 0.05f;
       }
     }
   }
@@ -206,34 +207,36 @@ void draw(void) {
 void key(int keycode) {
   switch(keycode) {
   case GL4DK_RIGHT: // ici on va definir pour la touche droite du clavier un state 
-    if (state == 1){ // et si le pacman est daja dans un autre state autre que 0 on va lui assigner un state specifique
-      state = 2;
-      break;
-    }
-    if (state == 2){
-      state = 3;
-      break;
-    }
-    if (state == 3){
-      state = 0;
-      break;
+    if(state == 4){ // on regarde d'abord si nous somme en state 4 c'est a dire en collision
+      if(col == 1){ // si c'est le cas on regarde quel etat était le state pendant la colision
+        break; // si le state durant la collision et le meme que l'on veut appliquer avec notre touche on break
+      }
     }
     state = 1;
     break;
-  case GL4DK_LEFT: // pareille pour la touche gauche
-    if (state == 1){
-      state = 0;
-      break;
-    }
-    if (state == 2){
-      state = 1;
-      break;
-    }
-    if (state == 3){
-      state = 2;
-      break;
+  case GL4DK_LEFT: // pareille pour les autres touches
+    if(state == 4){
+      if(col == 3){
+        break;
+      }
     }
     state = 3;
+    break;
+  case GL4DK_UP:
+    if(state == 4){
+      if(col == 0){
+        break;
+      }
+    } 
+    state = 0;
+    break;
+  case GL4DK_DOWN:
+    if(state == 4){
+      if(col == 2){
+        break;
+      }
+    }
+    state = 2;
     break;
   case GL4DK_v: /* 'v' changer de vue */
     _vue = !_vue;
@@ -241,8 +244,6 @@ void key(int keycode) {
   default: break;
   }
 }
-
-
 
 /*!\brief à appeler à la sortie du programme. */
 void sortie(void) {
