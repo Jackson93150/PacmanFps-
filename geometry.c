@@ -155,3 +155,4 @@ surface_t * mkSphere(int longitudes, int latitudes) {
   free(data);
   return newSurface(t, n, 0, 1);
 }
+
