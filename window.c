@@ -138,7 +138,7 @@ void draw(void)
   else
   {
     /* on place la caméra en vue du dessus */
-    lookAt(mvMat, 0, 50, -1, 0, 0, 0, 0, 1, 0);
+    lookAt(mvMat, 10, 50, 20, 0, 0, 0, 0, 1, 0);
   }
   /* je fais tourner l'ensemble pour que vous puissiez constater que
    * c'est bien en 3D, commentez ces 3 lignes pour que ça s'arrête */
@@ -182,7 +182,7 @@ void draw(void)
   memcpy(nmv, mvMat, sizeof nmv);
   translate(nmv, _ghost3.x, 1.0f, _ghost3.y + 10.0f);
   transform_n_raster(_cube4, nmv, projMat);
-
+  // on attribue les state au ghost
   if (statef == 0)
   {
     _ghost.y -= 0.04f;
@@ -204,7 +204,7 @@ void draw(void)
     _ghost.x += 0.0f;
     _ghost.y += 0.0f;
   }
-  
+
   if (statef2 == 0)
   {
     _ghost2.y -= 0.04f;
@@ -251,21 +251,21 @@ void draw(void)
   srand(time(NULL));
 
   for (i = 0; i < x; i++)
-  {
+  { // on regard si le ghost rentre en collision avec les murs
     if (_ghost.x + 1.9 >= CubeVx[i] && _ghost.x - 1.9 <= CubeVx[i] && _ghost.y + 1.9 >= CubeVy[i] && _ghost.y - 1.9 <= CubeVy[i])
     {
-      col = statef;
-      int n = rand() % 4;
-      if (col == 0)
+      col = statef;       // on stock le state dans col
+      int n = rand() % 4; // on choisi un nombre aleatoire entre 0 et 4 exclus
+      if (col == 0)       // pour chaque cas des col
       {
-        if (n == col)
+        if (n == col) // on verifie si le nombre aleatoire choisi est = a col
         {
-          n = rand() % 4;
+          n = rand() % 4; // si c'est le cas on chosi un autre nombre aléatoire
         }
-        _ghost.y += 0.05f;
-        statef = n;
+        _ghost.y += 0.05f; // on deplace le ghost a lopposer de la colision en sorte qu'il ne le soit plus
+        statef = n;        // et le state du ghost sera = au nombre aleatoire qui a été choisi
       }
-      if (col == 1)
+      if (col == 1) // la meme pour les autre cas de col
       {
         if (n == col)
         {
@@ -294,10 +294,10 @@ void draw(void)
       }
     }
   }
-
+  // la meme pour les autres ghost
   for (i = 0; i < x; i++)
   {
-    if (_ghost2.x + 1.9 >= CubeVx[i] && _ghost2.x - 1.9 <= CubeVx[i] && _ghost2.y + 1.9 + 6.0 >= CubeVy[i] && _ghost2.y - 1.9 + 6.0<= CubeVy[i])
+    if (_ghost2.x + 1.9 >= CubeVx[i] && _ghost2.x - 1.9 <= CubeVx[i] && _ghost2.y + 1.9 + 6.0 >= CubeVy[i] && _ghost2.y - 1.9 + 6.0 <= CubeVy[i])
     {
       col = statef2;
       int n = rand() % 4;
@@ -342,7 +342,7 @@ void draw(void)
 
   for (i = 0; i < x; i++)
   {
-    if (_ghost3.x + 1.9 >= CubeVx[i] && _ghost3.x - 1.9 <= CubeVx[i] && _ghost3.y + 1.9 + 10.0 >= CubeVy[i] && _ghost3.y - 1.9 + 10.0<= CubeVy[i])
+    if (_ghost3.x + 1.9 >= CubeVx[i] && _ghost3.x - 1.9 <= CubeVx[i] && _ghost3.y + 1.9 + 10.0 >= CubeVy[i] && _ghost3.y - 1.9 + 10.0 <= CubeVy[i])
     {
       col = statef3;
       int n = rand() % 4;
@@ -409,6 +409,22 @@ void draw(void)
       }
     }
   }
+  // effet de collision  entre les ghost et le pacman
+  if (_ball.x + 2.0 >= _ghost.x && _ball.x - 2.0 <= _ghost.x && _ball.y + 2.0+6.0 >= _ghost.y && _ball.y - 2.0+6.0 <= _ghost.y)
+  {          
+    state = 4;
+  }
+
+  if (_ball.x + 2.0 >= _ghost2.x && _ball.x - 2.0 <= _ghost2.x && _ball.y + 2.0 >= _ghost2.y && _ball.y - 2.0 <= _ghost2.y)
+  {          
+    state = 4;
+  }
+
+  if (_ball.x + 2.0 >= _ghost3.x && _ball.x - 2.0 <= _ghost3.x && _ball.y + 6.0 >= _ghost3.y && _ball.y - 6.0 <= _ghost3.y)
+  {          
+    state = 4;
+  }
+
   if (state == 0)
   { // pour chaque state le pacman va avancer dans une direction
     _ball.y -= 0.04f;
