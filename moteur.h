@@ -29,7 +29,8 @@ extern "C" {
   typedef struct vertex_t vertex_t;
   typedef struct triangle_t triangle_t;
   typedef struct surface_t surface_t;
-
+  double Bonusx[249];
+  double Bonusy[249];
   /*!\brief états pour les sommets ou les triangles */
   enum pstate_t {
 		 PS_NONE = 0,

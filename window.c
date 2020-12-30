@@ -12,6 +12,7 @@ double CubeVx[192]; // vecteur dans lequel on va stocker toute les position x de
 double CubeVy[192]; // vecteur dans lequel on va stocker toute les position y des cubes
 double a = 0;
 double a2 = 0;
+double a3 = 0;
 int x = 192;
 /*!\brief une surface représentant un quadrilatère */
 static surface_t *_quad = NULL;
@@ -21,10 +22,12 @@ static surface_t *_cube2 = NULL;
 static surface_t *_cube3 = NULL;
 static surface_t *_cube4 = NULL;
 static surface_t *_sphere = NULL; //sphere qui fera office de pacman
+static surface_t *_sphere2 = NULL;
 /*!\brief variable pour changer de vue, 0 -> isométrique ; 1 -> dessus */
 static int _vue = 0;
 /*!\brief le labyrinthe */
 static unsigned int *_laby = NULL;
+static unsigned int *_laby2 = NULL;
 /*!\brief la largeur du labyrinthe */
 static int lW = 21;
 /*!\brief la hauteur du labyrinthe */
@@ -39,6 +42,10 @@ int statef = 0;
 int statef2 = 0;
 int statef3 = 0;
 /*!\brief paramètre l'application et lance la boucle infinie. */
+void ok (void){
+  _laby2 = labyrinth(lW, lH);
+}
+
 int main(int argc, char **argv)
 {
   /* tentative de création d'une fenêtre pour GL4Dummies */
@@ -80,6 +87,7 @@ void init(void)
   _cube2 = mkCube();
   _cube3 = mkCube();
   _cube4 = mkCube();
+  _sphere2 = mkSphere(6,2);
   /* on change les couleurs de surfaces */
   _quad->dcolor = g;
   _cube->dcolor = b;
@@ -87,6 +95,7 @@ void init(void)
   _cube2->dcolor = g;
   _cube3->dcolor = j;
   _cube4->dcolor = r;
+  _sphere2->dcolor = r;
   /* on leur rajoute la texture au cube */
   setTexId(_quad, getTexFromBMP("images/sol.bmp"));
   setTexId(_cube, getTexFromBMP("images/mur.bmp"));
@@ -108,6 +117,7 @@ void init(void)
   enableSurfaceOption(_cube2, SO_USE_LIGHTING);
   enableSurfaceOption(_cube3, SO_USE_LIGHTING);
   enableSurfaceOption(_cube4, SO_USE_LIGHTING);
+  enableSurfaceOption(_sphere2, SO_USE_LIGHTING);
   _laby = labyrinth(lW, lH);
   /* mettre en place la fonction à appeler en cas de sortie */
   atexit(sortie);
@@ -119,6 +129,7 @@ void draw(void)
   int i, j;
   float mvMat[16], projMat[16], nmv[16];
   int z = 0;
+  int rst = 0;
   //static float angle = 0.0f;
   /* effacer l'écran et le buffer de profondeur */
   gl4dpClearScreen();
@@ -150,22 +161,40 @@ void draw(void)
   rotate(nmv, -90.0f, 1.0f, 0.0f, 0.0f);
   scale(nmv, lW - 1, lH - 1, 1.0f);
   transform_n_raster(_quad, nmv, projMat);
+  //printf("%f",Bonusy[240]);
   /* le cube est relevé (+1 en y) et placé là où il y a des murs */
   for (i = -lH / 2; i <= lH / 2; ++i)
     for (j = -lW / 2; j <= lW / 2; ++j)
     {
       /* vide, pas de bloc mur */
-      if (_laby[(i + lH / 2) * lW + j + lW / 2] == 0)
-        continue;
-      memcpy(nmv, mvMat, sizeof nmv);  /* copie mvMat dans nmv */
-      translate(nmv, 2 * j, 0, 2 * i); /* pourquoi *2 ? */
-      a = 2 * j;                       // a va etre = a la position x et a2 a la position y
-      a2 = 2 * i;
-      CubeVx[z] = a; // et on va stocker a et a2 dans leur vecteur correspondant
-      CubeVy[z] = a2;
-      z += 1;
-      translate(nmv, 0.0f, 1.0f, 0.0f);
-      transform_n_raster(_cube, nmv, projMat);
+      if (_laby[(i + lH / 2) * lW + j + lW / 2] == 0){ // dans le cas ou il ny'a pas de mur dans le labyrinth
+        memcpy(nmv, mvMat, sizeof nmv); 
+        a = 2 * j;
+        a2 = 2 * i;
+        a3 = 0;
+        if (_ball.x + 1.0 >= a && _ball.x - 1.0 <= a && _ball.y + 1.0+6.0 >= a2 && _ball.y - 1.0+6.0 <= a2){ // on regarde ou se trouve le pacman 
+          Bonusx[rst] = 50.0; // a l'endroit ou se trouve le pacman on va utiliser le vecteur qu'on a creer dans motheur.h
+          Bonusy[rst] = 50.0; // et on va definir la valeur 50.0 a la position de la case vide ou le pacman se trouve
+        }
+        if (Bonusx[rst] != 50.0 && Bonusy[rst]!= 50.0){ // si le la position de la case vide n'est pas = 50.0
+          translate(nmv, a, a3, a2); // on va draw les bonus
+          translate(nmv, 0.0f, 1.0f, 0.0f);
+          scale(nmv, 0.5f,1.0f, 0.5f);
+          transform_n_raster(_sphere2, nmv, projMat);
+        }
+        rst += 1;
+      }
+      else {
+        memcpy(nmv, mvMat, sizeof nmv);  /* copie mvMat dans nmv */
+        translate(nmv, 2 * j, 0, 2 * i); /* pourquoi *2 ? */
+        a = 2 * j;                       // a va etre = a la position x et a2 a la position y
+        a2 = 2 * i;
+        CubeVx[z] = a; // et on va stocker a et a2 dans leur vecteur correspondant
+        CubeVy[z] = a2;
+        z += 1;
+        translate(nmv, 0.0f, 1.0f, 0.0f);
+        transform_n_raster(_cube, nmv, projMat);
+        }
     }
   memcpy(nmv, mvMat, sizeof nmv); //affichage du pacman
   translate(nmv, _ball.x, 1.0f, _ball.y + 6.0f);
@@ -420,7 +449,7 @@ void draw(void)
     state = 4;
   }
 
-  if (_ball.x + 2.0 >= _ghost3.x && _ball.x - 2.0 <= _ghost3.x && _ball.y + 6.0 >= _ghost3.y && _ball.y - 6.0 <= _ghost3.y)
+  if (_ball.x + 2.0 >= _ghost3.x && _ball.x - 2.0 <= _ghost3.x && _ball.y + 2.0-4.0 >= _ghost3.y && _ball.y - 2.0-4.0 <= _ghost3.y)
   {          
     state = 4;
   }
