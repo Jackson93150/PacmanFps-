@@ -25,6 +25,8 @@ static surface_t *_sphere = NULL; //sphere qui fera office de pacman
 static surface_t *_sphere2 = NULL;
 /*!\brief variable pour changer de vue, 0 -> isométrique ; 1 -> dessus */
 static int _vue = 0;
+int speed = 1;
+int level = 1;
 /*!\brief le labyrinthe */
 static unsigned int *_laby = NULL;
 /*!\brief la largeur du labyrinthe */
@@ -42,8 +44,8 @@ int statef2 = 0;
 int statef3 = 0;
 /*!\brief paramètre l'application et lance la boucle infinie. */
 
-void restart(){ // fonction qui va nous permettre de réinitialiser le jeu 
-  int i;  // en remettant tous a l'état d'origine
+void restart(){
+  int i;
   a = 0;
   a2 = 0;
   a3 = 0;
@@ -61,19 +63,26 @@ void restart(){ // fonction qui va nous permettre de réinitialiser le jeu
   statef = 0;
   statef2 = 0;
   statef3 = 0;
-  score = 0;
+  score2 = 0;
+  if (level == 1){ // si le level est 1 la vitesse des fantome sera de 1
+    speed = 1;
+  }
+  else{ // sinon on augmente de 1 la vitesse des fantome
+    speed += 1;
+  }
   for(i = 0; i < 249 ; i++){
     Bonusx[i] = 0.0;
     Bonusy[i] = 0.0;
   }
 }
 
+
 int main(int argc, char **argv)
 {
   /* tentative de création d'une fenêtre pour GL4Dummies */
   if (!gl4duwCreateWindow(argc, argv,       /* args du programme */
                           "Pacman3D",       /* titre */
-                          10, 10, 500, 500, /* x, y, largeur, heuteur */
+                          10, 10, 600, 600, /* x, y, largeur, heuteur */
                           GL4DW_SHOWN) /* état visible */)
   {
     /* ici si échec de la création souvent lié à un problème d'absence
@@ -152,6 +161,7 @@ void draw(void)
   float mvMat[16], projMat[16], nmv[16];
   int z = 0;
   int rst = 0;
+  int ct = 0;
   //static float angle = 0.0f;
   /* effacer l'écran et le buffer de profondeur */
   gl4dpClearScreen();
@@ -196,11 +206,11 @@ void draw(void)
         a3 = 0;
         if (_ball.x + 1.0 >= a && _ball.x - 1.0 <= a && _ball.y + 1.0+6.0 >= a2 && _ball.y - 1.0+6.0 <= a2){ // on regarde ou se trouve le pacman 
           if (Bonusx[rst] == 50.0 && Bonusy[rst]== 50.0){
-            score -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
+            score2 -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
           }
           Bonusx[rst] = 50.0; // a l'endroit ou se trouve le pacman on va utiliser le vecteur qu'on a creer dans motheur.h
           Bonusy[rst] = 50.0; // et on va definir la valeur 50.0 a la position de la case vide ou le pacman se trouve
-          score += 1; // on rajoute 1 au score
+          score2 += 1; // on rajoute 1 au score
         }
         if (Bonusx[rst] != 50.0 && Bonusy[rst]!= 50.0){ // si le la position de la case vide n'est pas = 50.0
           translate(nmv, a, a3, a2); // on va draw les bonus
@@ -240,19 +250,19 @@ void draw(void)
   // on attribue les state au ghost
   if (statef == 0)
   {
-    _ghost.y -= 0.04f;
+    _ghost.y -= (0.04f*speed);
   }
   if (statef == 1)
   {
-    _ghost.x += 0.04f;
+    _ghost.x += (0.04f*speed);
   }
   if (statef == 2)
   {
-    _ghost.y += 0.04f;
+    _ghost.y += (0.04f*speed);
   }
   if (statef == 3)
   {
-    _ghost.x -= 0.04f;
+    _ghost.x -= (0.04f*speed);
   }
   if (statef == 4)
   {
@@ -262,19 +272,19 @@ void draw(void)
 
   if (statef2 == 0)
   {
-    _ghost2.y -= 0.04f;
+    _ghost2.y -= (0.04f*speed);
   }
   if (statef2 == 1)
   {
-    _ghost2.x += 0.04f;
+    _ghost2.x += (0.04f*speed);
   }
   if (statef2 == 2)
   {
-    _ghost2.y += 0.04f;
+    _ghost2.y += (0.04f*speed);
   }
   if (statef2 == 3)
   {
-    _ghost2.x -= 0.04f;
+    _ghost2.x -= (0.04f*speed);
   }
   if (statef2 == 4)
   {
@@ -284,19 +294,19 @@ void draw(void)
 
   if (statef3 == 0)
   {
-    _ghost3.y -= 0.04f;
+    _ghost3.y -= (0.04f*speed);
   }
   if (statef3 == 1)
   {
-    _ghost3.x += 0.04f;
+    _ghost3.x += (0.04f*speed);
   }
   if (statef3 == 2)
   {
-    _ghost3.y += 0.04f;
+    _ghost3.y += (0.04f*speed);
   }
   if (statef3 == 3)
   {
-    _ghost3.x -= 0.04f;
+    _ghost3.x -= (0.04f*speed);
   }
   if (statef3 == 4)
   {
@@ -317,7 +327,7 @@ void draw(void)
         {
           n = rand() % 4; // si c'est le cas on chosi un autre nombre aléatoire
         }
-        _ghost.y += 0.05f; // on deplace le ghost a lopposer de la colision en sorte qu'il ne le soit plus
+        _ghost.y += ((0.04f*speed) + 0.01f); // on deplace le ghost a lopposer de la colision en sorte qu'il ne le soit plus
         statef = n;        // et le state du ghost sera = au nombre aleatoire qui a été choisi
       }
       if (col == 1) // la meme pour les autre cas de col
@@ -326,7 +336,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost.x -= 0.05f;
+        _ghost.x -= ((0.04f*speed) + 0.01f);
         statef = n;
       }
       if (col == 2)
@@ -335,7 +345,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost.y -= 0.05f;
+        _ghost.y -= ((0.04f*speed) + 0.01f);
         statef = n;
       }
       if (col == 3)
@@ -344,7 +354,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost.x += 0.05f;
+        _ghost.x += ((0.04f*speed) + 0.01f);
         statef = n;
       }
     }
@@ -362,7 +372,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost2.y += 0.05f;
+        _ghost2.y += ((0.04f*speed) + 0.01f);
         statef2 = n;
       }
       if (col == 1)
@@ -371,7 +381,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost2.x -= 0.05f;
+        _ghost2.x -= ((0.04f*speed) + 0.01f);
         statef2 = n;
       }
       if (col == 2)
@@ -380,7 +390,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost2.y -= 0.05f;
+        _ghost2.y -= ((0.04f*speed) + 0.01f);
         statef2 = n;
       }
       if (col == 3)
@@ -389,7 +399,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost2.x += 0.05f;
+        _ghost2.x += ((0.04f*speed) + 0.01f);
         statef2 = n;
       }
     }
@@ -407,7 +417,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost3.y += 0.05f;
+        _ghost3.y += ((0.04f*speed) + 0.01f);
         statef3 = n;
       }
       if (col == 1)
@@ -416,7 +426,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost3.x -= 0.05f;
+        _ghost3.x -= ((0.04f*speed) + 0.01f);
         statef3 = n;
       }
       if (col == 2)
@@ -425,7 +435,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost3.y -= 0.05f;
+        _ghost3.y -= ((0.04f*speed) + 0.01f);
         statef3 = n;
       }
       if (col == 3)
@@ -434,7 +444,7 @@ void draw(void)
         {
           n = rand() % 4;
         }
-        _ghost3.x += 0.05f;
+        _ghost3.x += ((0.04f*speed) + 0.01f);
         statef3 = n;
       }
     }
@@ -466,18 +476,31 @@ void draw(void)
   }
   // effet de collision  entre les ghost et le pacman
   if (_ball.x + 2.0 >= _ghost.x && _ball.x - 2.0 <= _ghost.x && _ball.y + 2.0+6.0 >= _ghost.y && _ball.y - 2.0+6.0 <= _ghost.y)
-  {          
+  {      
+    level = 1;    
     restart();
   }
 
   if (_ball.x + 2.0 >= _ghost2.x && _ball.x - 2.0 <= _ghost2.x && _ball.y + 2.0 >= _ghost2.y && _ball.y - 2.0 <= _ghost2.y)
-  {          
+  {        
+    level = 1;  
     restart();
   }
 
   if (_ball.x + 2.0 >= _ghost3.x && _ball.x - 2.0 <= _ghost3.x && _ball.y + 2.0-4.0 >= _ghost3.y && _ball.y - 2.0-4.0 <= _ghost3.y)
-  {          
+  {       
+    level = 1;   
     restart();
+  }
+
+  for(i = 0; i < 249 ; i++){ // fonction qui va nous permettre de changer de niveau
+    if (Bonusx[i] == 50.0 && Bonusy[i] == 50.0){
+      ct += 1; // on regarde si les bonus on été pris
+    }
+    if (ct == 249){ // si tous les bonus ont été pris (les 249)
+      level += 1; // on augmente le niveau de 1 et on restart
+      restart();
+    }
   }
 
   if (state == 0)
