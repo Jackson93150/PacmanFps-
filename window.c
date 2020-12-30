@@ -27,7 +27,6 @@ static surface_t *_sphere2 = NULL;
 static int _vue = 0;
 /*!\brief le labyrinthe */
 static unsigned int *_laby = NULL;
-static unsigned int *_laby2 = NULL;
 /*!\brief la largeur du labyrinthe */
 static int lW = 21;
 /*!\brief la hauteur du labyrinthe */
@@ -42,8 +41,31 @@ int statef = 0;
 int statef2 = 0;
 int statef3 = 0;
 /*!\brief paramètre l'application et lance la boucle infinie. */
-void ok (void){
-  _laby2 = labyrinth(lW, lH);
+
+void restart(){ // fonction qui va nous permettre de réinitialiser le jeu 
+  int i;  // en remettant tous a l'état d'origine
+  a = 0;
+  a2 = 0;
+  a3 = 0;
+  x = 192;
+  col = 0;
+  _ball.x = -10.2f;
+  _ball.y = 0.0f;
+  _ghost.x = 6.0f;
+  _ghost.y = 0.0f;
+  _ghost2.x = 0.0f;
+  _ghost2.y = 0.0f;
+  _ghost3.x = -4.0f;
+  _ghost3.y = 0.0f;
+  state = 0; 
+  statef = 0;
+  statef2 = 0;
+  statef3 = 0;
+  score = 0;
+  for(i = 0; i < 249 ; i++){
+    Bonusx[i] = 0.0;
+    Bonusy[i] = 0.0;
+  }
 }
 
 int main(int argc, char **argv)
@@ -173,8 +195,12 @@ void draw(void)
         a2 = 2 * i;
         a3 = 0;
         if (_ball.x + 1.0 >= a && _ball.x - 1.0 <= a && _ball.y + 1.0+6.0 >= a2 && _ball.y - 1.0+6.0 <= a2){ // on regarde ou se trouve le pacman 
+          if (Bonusx[rst] == 50.0 && Bonusy[rst]== 50.0){
+            score -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
+          }
           Bonusx[rst] = 50.0; // a l'endroit ou se trouve le pacman on va utiliser le vecteur qu'on a creer dans motheur.h
           Bonusy[rst] = 50.0; // et on va definir la valeur 50.0 a la position de la case vide ou le pacman se trouve
+          score += 1; // on rajoute 1 au score
         }
         if (Bonusx[rst] != 50.0 && Bonusy[rst]!= 50.0){ // si le la position de la case vide n'est pas = 50.0
           translate(nmv, a, a3, a2); // on va draw les bonus
@@ -441,17 +467,17 @@ void draw(void)
   // effet de collision  entre les ghost et le pacman
   if (_ball.x + 2.0 >= _ghost.x && _ball.x - 2.0 <= _ghost.x && _ball.y + 2.0+6.0 >= _ghost.y && _ball.y - 2.0+6.0 <= _ghost.y)
   {          
-    state = 4;
+    restart();
   }
 
   if (_ball.x + 2.0 >= _ghost2.x && _ball.x - 2.0 <= _ghost2.x && _ball.y + 2.0 >= _ghost2.y && _ball.y - 2.0 <= _ghost2.y)
   {          
-    state = 4;
+    restart();
   }
 
   if (_ball.x + 2.0 >= _ghost3.x && _ball.x - 2.0 <= _ghost3.x && _ball.y + 2.0-4.0 >= _ghost3.y && _ball.y - 2.0-4.0 <= _ghost3.y)
   {          
-    state = 4;
+    restart();
   }
 
   if (state == 0)
