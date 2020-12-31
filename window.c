@@ -2,7 +2,9 @@
 #include <assert.h>
 #include <GL4D/gl4dp.h>
 #include "moteur.h"
+#include <GL4D/gl4du.h>
 #include <GL4D/gl4duw_SDL2.h>
+#include <SDL_ttf.h>
 extern unsigned int *labyrinth(int w, int h);
 static void init(void);
 static void draw(void);
@@ -42,6 +44,7 @@ int state = 0; // variable state qui va nous permettre de nous deplacer
 int statef = 0;
 int statef2 = 0;
 int statef3 = 0;
+int scores = 0;
 /*!\brief paramètre l'application et lance la boucle infinie. */
 
 void restart(){
@@ -63,9 +66,9 @@ void restart(){
   statef = 0;
   statef2 = 0;
   statef3 = 0;
-  score2 = 0;
   if (level == 1){ // si le level est 1 la vitesse des fantome sera de 1
     speed = 1;
+    scores = 0;
   }
   else{ // sinon on augmente de 1 la vitesse des fantome
     speed += 1;
@@ -206,11 +209,11 @@ void draw(void)
         a3 = 0;
         if (_ball.x + 1.0 >= a && _ball.x - 1.0 <= a && _ball.y + 1.0+6.0 >= a2 && _ball.y - 1.0+6.0 <= a2){ // on regarde ou se trouve le pacman 
           if (Bonusx[rst] == 50.0 && Bonusy[rst]== 50.0){
-            score2 -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
+            scores -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
           }
           Bonusx[rst] = 50.0; // a l'endroit ou se trouve le pacman on va utiliser le vecteur qu'on a creer dans motheur.h
           Bonusy[rst] = 50.0; // et on va definir la valeur 50.0 a la position de la case vide ou le pacman se trouve
-          score2 += 1; // on rajoute 1 au score
+          scores += 1; // on rajoute 1 au score
         }
         if (Bonusx[rst] != 50.0 && Bonusy[rst]!= 50.0){ // si le la position de la case vide n'est pas = 50.0
           translate(nmv, a, a3, a2); // on va draw les bonus
@@ -476,19 +479,22 @@ void draw(void)
   }
   // effet de collision  entre les ghost et le pacman
   if (_ball.x + 2.0 >= _ghost.x && _ball.x - 2.0 <= _ghost.x && _ball.y + 2.0+6.0 >= _ghost.y && _ball.y - 2.0+6.0 <= _ghost.y)
-  {      
+  { 
+    printf("Votre scores est de %d et vous avez atteint le niveau %d \n",scores,level);     
     level = 1;    
     restart();
   }
 
   if (_ball.x + 2.0 >= _ghost2.x && _ball.x - 2.0 <= _ghost2.x && _ball.y + 2.0 >= _ghost2.y && _ball.y - 2.0 <= _ghost2.y)
   {        
+    printf("Votre scores est de %d et vous avez atteint le niveau %d \n",scores,level);
     level = 1;  
     restart();
   }
 
   if (_ball.x + 2.0 >= _ghost3.x && _ball.x - 2.0 <= _ghost3.x && _ball.y + 2.0-4.0 >= _ghost3.y && _ball.y - 2.0-4.0 <= _ghost3.y)
-  {       
+  {      
+    printf("Votre scores est de %d et vous avez atteint le niveau %d \n",scores,level);
     level = 1;   
     restart();
   }

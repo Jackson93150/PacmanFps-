@@ -14,7 +14,7 @@ CP = rsync -R
 # déclaration des options du compilateur
 CFLAGS = -Wall -O3
 CPPFLAGS = -I.
-LDFLAGS = -lm
+LDFLAGS = -lm -lSDL2_ttf
 # définition des fichiers et dossiers
 PACKNAME = sc_00_07
 PROGNAME = moteur_laby_iso

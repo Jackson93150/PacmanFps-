@@ -31,7 +31,6 @@ extern "C" {
   typedef struct surface_t surface_t;
   double Bonusx[249]; // on va stocker la position x des bonus
   double Bonusy[249]; // position y des bonus
-  int score2 = 0;
   /*!\brief états pour les sommets ou les triangles */
   enum pstate_t {
 		 PS_NONE = 0,
