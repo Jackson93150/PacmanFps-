@@ -16,6 +16,7 @@ double a = 0;
 double a2 = 0;
 double a3 = 0;
 int x = 192;
+int compteur = 0;
 /*!\brief une surface représentant un quadrilatère */
 static surface_t *_quad = NULL;
 /*!\brief une surface représentant un cube */
@@ -25,8 +26,12 @@ static surface_t *_cube3 = NULL;
 static surface_t *_cube4 = NULL;
 static surface_t *_sphere = NULL; //sphere qui fera office de pacman
 static surface_t *_sphere2 = NULL;
+static surface_t *_sphere3 = NULL;
+static surface_t *_sphere4 = NULL;
 /*!\brief variable pour changer de vue, 0 -> isométrique ; 1 -> dessus */
 static int _vue = 0;
+int pacspeed = 1;
+int flashmod = 0;
 int speed = 1;
 int level = 1;
 /*!\brief le labyrinthe */
@@ -66,12 +71,17 @@ void restart(){
   statef = 0;
   statef2 = 0;
   statef3 = 0;
+  flashmod = 0;
+  pacspeed = 1;
   if (level == 1){ // si le level est 1 la vitesse des fantome sera de 1
     speed = 1;
     scores = 0;
   }
   else{ // sinon on augmente de 1 la vitesse des fantome
     speed += 1;
+  }
+  if(speed == 4){
+    speed = 4;
   }
   for(i = 0; i < 249 ; i++){
     Bonusx[i] = 0.0;
@@ -85,7 +95,7 @@ int main(int argc, char **argv)
   /* tentative de création d'une fenêtre pour GL4Dummies */
   if (!gl4duwCreateWindow(argc, argv,       /* args du programme */
                           "Pacman3D",       /* titre */
-                          10, 10, 600, 600, /* x, y, largeur, heuteur */
+                          10, 10, 650, 600, /* x, y, largeur, heuteur */
                           GL4DW_SHOWN) /* état visible */)
   {
     /* ici si échec de la création souvent lié à un problème d'absence
@@ -113,15 +123,17 @@ int main(int argc, char **argv)
  * utilisées dans ce code */
 void init(void)
 {
-  vec4 j = {1.0f, 1.0f, 0.0f, 0.0f}, g = {0.7f, 0.7f, 0.7f, 1}, b = {0.1f, 0.1f, 0.7f, 1}, r = {1.0f, 0.0f, 0.0f, 0.0f};
+  vec4 j = {1.0f, 1.0f, 0.0f, 0.0f}, g = {0.7f, 0.7f, 0.7f, 1}, b = {0.1f, 0.1f, 0.7f, 1}, r = {1.0f, 0.0f, 0.0f, 0.0f}, ro = {0.8f, 0.0f, 0.8f, 0.25f};
   /* on créé nos deux types de surfaces */
   _quad = mkQuad(); /* ça fait 2 triangles        */
   _cube = mkCube(); /* ça fait 2x6 triangles      */
-  _sphere = mkSphere(12, 2);
+  _sphere = mkSphere(12, 6);
   _cube2 = mkCube();
   _cube3 = mkCube();
   _cube4 = mkCube();
-  _sphere2 = mkSphere(6,2);
+  _sphere2 = mkSphere(8,2);
+  _sphere3 = mkSphere(9,4);
+  _sphere4 = mkSphere(9,4);
   /* on change les couleurs de surfaces */
   _quad->dcolor = g;
   _cube->dcolor = b;
@@ -129,7 +141,9 @@ void init(void)
   _cube2->dcolor = g;
   _cube3->dcolor = j;
   _cube4->dcolor = r;
-  _sphere2->dcolor = r;
+  _sphere2->dcolor = ro;
+  _sphere3->dcolor = r;
+  _sphere4->dcolor = j;
   /* on leur rajoute la texture au cube */
   setTexId(_quad, getTexFromBMP("images/sol.bmp"));
   setTexId(_cube, getTexFromBMP("images/mur.bmp"));
@@ -137,6 +151,9 @@ void init(void)
   setTexId(_cube2, getTexFromBMP("images/ghost.bmp"));
   setTexId(_cube3, getTexFromBMP("images/ghost.bmp"));
   setTexId(_cube4, getTexFromBMP("images/ghost.bmp"));
+  setTexId(_sphere2, getTexFromBMP("images/bonus.bmp"));
+  setTexId(_sphere3, getTexFromBMP("images/bonus.bmp"));
+  setTexId(_sphere4, getTexFromBMP("images/mur.bmp"));
   /* on active l'utilisation de la texture pour le cube */
   enableSurfaceOption(_quad, SO_USE_TEXTURE);
   enableSurfaceOption(_cube, SO_USE_TEXTURE);
@@ -144,6 +161,9 @@ void init(void)
   enableSurfaceOption(_cube2, SO_USE_TEXTURE);
   enableSurfaceOption(_cube3, SO_USE_TEXTURE);
   enableSurfaceOption(_cube4, SO_USE_TEXTURE);
+  enableSurfaceOption(_sphere2, SO_USE_TEXTURE);
+  enableSurfaceOption(_sphere3, SO_USE_TEXTURE);
+  enableSurfaceOption(_sphere4, SO_USE_TEXTURE);
   /* on active l'ombrage */
   enableSurfaceOption(_quad, SO_USE_LIGHTING);
   enableSurfaceOption(_cube, SO_USE_LIGHTING);
@@ -152,6 +172,8 @@ void init(void)
   enableSurfaceOption(_cube3, SO_USE_LIGHTING);
   enableSurfaceOption(_cube4, SO_USE_LIGHTING);
   enableSurfaceOption(_sphere2, SO_USE_LIGHTING);
+  enableSurfaceOption(_sphere3, SO_USE_LIGHTING);
+  enableSurfaceOption(_sphere4, SO_USE_LIGHTING);
   _laby = labyrinth(lW, lH);
   /* mettre en place la fonction à appeler en cas de sortie */
   atexit(sortie);
@@ -209,17 +231,46 @@ void draw(void)
         a3 = 0;
         if (_ball.x + 1.0 >= a && _ball.x - 1.0 <= a && _ball.y + 1.0+6.0 >= a2 && _ball.y - 1.0+6.0 <= a2){ // on regarde ou se trouve le pacman 
           if (Bonusx[rst] == 50.0 && Bonusy[rst]== 50.0){
-            scores -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
+            if (a == 0 || a == 12 || a == - 12 || a2 == 0 || a2 == 12 || a2 == -12){
+              if (a == 2 && a2 == 0){
+                flashmod = 1; // quand le pacman prend le bonus du flashmod on active en passant flashmod a 1
+              }
+              scores -= 3; 
+            }
+            else{
+              scores -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
+            }
           }
           Bonusx[rst] = 50.0; // a l'endroit ou se trouve le pacman on va utiliser le vecteur qu'on a creer dans motheur.h
           Bonusy[rst] = 50.0; // et on va definir la valeur 50.0 a la position de la case vide ou le pacman se trouve
-          scores += 1; // on rajoute 1 au score
+          if (a == 0 || a == 12 || a == - 12 || a2 == 0 || a2 == 12 || a2 == -12){
+            scores += 3;
+          }
+          else{
+            scores += 1; // on rajoute 1 au score
+          }
         }
         if (Bonusx[rst] != 50.0 && Bonusy[rst]!= 50.0){ // si le la position de la case vide n'est pas = 50.0
-          translate(nmv, a, a3, a2); // on va draw les bonus
-          translate(nmv, 0.0f, 1.0f, 0.0f);
-          scale(nmv, 0.5f,1.0f, 0.5f);
-          transform_n_raster(_sphere2, nmv, projMat);
+          if (a == 0 || a == 12 || a == - 12 || a2 == 0 || a2 == 12 || a2 == -12){
+            if(a==2 && a2 == 0){
+              translate(nmv, a, a3, a2); // on va draw le bonus du flashmod
+              translate(nmv, 0.0f, 1.0f, 0.0f);
+              scale(nmv, 0.8f,1.0f, 0.8f);
+              transform_n_raster(_sphere4, nmv, projMat);
+            }
+            else{
+              translate(nmv, a, a3, a2); // on va draw les bonus qui rapporte plus de points
+              translate(nmv, 0.0f, 1.0f, 0.0f);
+              scale(nmv, 0.55f,1.0f, 0.55f);
+              transform_n_raster(_sphere3, nmv, projMat);
+            }
+          }
+          else{
+            translate(nmv, a, a3, a2); // on va draw les bonus
+            translate(nmv, 0.0f, 1.0f, 0.0f);
+            scale(nmv, 0.5f,1.0f, 0.5f);
+            transform_n_raster(_sphere2, nmv, projMat);
+          }
         }
         rst += 1;
       }
@@ -232,6 +283,7 @@ void draw(void)
         CubeVy[z] = a2;
         z += 1;
         translate(nmv, 0.0f, 1.0f, 0.0f);
+        scale(nmv, 0.75f,1.0f, 0.75f);
         transform_n_raster(_cube, nmv, projMat);
         }
     }
@@ -250,6 +302,7 @@ void draw(void)
   memcpy(nmv, mvMat, sizeof nmv);
   translate(nmv, _ghost3.x, 1.0f, _ghost3.y + 10.0f);
   transform_n_raster(_cube4, nmv, projMat);
+
   // on attribue les state au ghost
   if (statef == 0)
   {
@@ -453,6 +506,17 @@ void draw(void)
     }
   }
 
+  if(flashmod == 1){ // active le flashmod
+    pacspeed = 3; // on augmente la vitesse du pacman
+    compteur += 1; // on continue tant que le compteur n'atteint pas 2500
+  }
+
+  if(compteur == 2500){ // quand le compteur atteint 2500 on le remet les valeurs initiale
+    pacspeed = 1;
+    compteur = 0;
+    flashmod = 0;
+  }
+
   for (i = 0; i < x; i++)
   {
     if (_ball.x + 1.7 >= CubeVx[i] && _ball.x - 1.7 <= CubeVx[i] && _ball.y + 1.7 + 6.0 >= CubeVy[i] && _ball.y - 1.7 + 6.0 <= CubeVy[i])
@@ -461,19 +525,19 @@ void draw(void)
       state = 4;   // on passe au state 4 qui nous fige
       if (col == 0)
       {                   // on regarde le state dans laquel on était durant la collision
-        _ball.y += 0.05f; // et on deplace la balle dans du cote opposer du state en sorte que la balle ne soit plus en collision
+        _ball.y += ((0.04f*pacspeed) + 0.01f); // et on deplace la balle dans du cote opposer du state en sorte que la balle ne soit plus en collision
       }
       if (col == 1)
       {
-        _ball.x -= 0.05f;
+        _ball.x -= ((0.04f*pacspeed) + 0.01f);
       }
       if (col == 2)
       {
-        _ball.y -= 0.05f;
+        _ball.y -= ((0.04f*pacspeed) + 0.01f);
       }
       if (col == 3)
       {
-        _ball.x += 0.05f;
+        _ball.x += ((0.04f*pacspeed) + 0.01f);
       }
     }
   }
@@ -511,19 +575,19 @@ void draw(void)
 
   if (state == 0)
   { // pour chaque state le pacman va avancer dans une direction
-    _ball.y -= 0.04f;
+    _ball.y -= (0.04f * pacspeed);
   }
   if (state == 1)
   {
-    _ball.x += 0.04f;
+    _ball.x += (0.04f * pacspeed);
   }
   if (state == 2)
   {
-    _ball.y += 0.04f;
+    _ball.y += (0.04f * pacspeed);
   }
   if (state == 3)
   {
-    _ball.x -= 0.04f;
+    _ball.x -= (0.04f * pacspeed);
   }
   if (state == 4)
   {
