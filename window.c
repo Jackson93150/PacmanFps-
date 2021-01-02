@@ -4,7 +4,6 @@
 #include "moteur.h"
 #include <GL4D/gl4du.h>
 #include <GL4D/gl4duw_SDL2.h>
-#include <SDL_ttf.h>
 extern unsigned int *labyrinth(int w, int h);
 static void init(void);
 static void draw(void);
