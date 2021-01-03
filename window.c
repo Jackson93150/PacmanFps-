@@ -11,8 +11,8 @@ static void key(int keycode);
 static void sortie(void);
 double CubeVx[192]; // vecteur dans lequel on va stocker toute les position x des cubes
 double CubeVy[192]; // vecteur dans lequel on va stocker toute les position y des cubes
-double Bonusx[249]; // on va stocker la position x des bonus
-double Bonusy[249]; // position y des bonus
+double Bonussx[249]; // on va stocker la position x des bonus
+double Bonussy[249]; // position y des bonus
 double a = 0;
 double a2 = 0;
 double a3 = 0;
@@ -85,8 +85,8 @@ void restart(){
     speed = 4;
   }
   for(i = 0; i < 249 ; i++){
-    Bonusx[i] = 0.0;
-    Bonusy[i] = 0.0;
+    Bonussx[i] = 0.0;
+    Bonussy[i] = 0.0;
   }
 }
 
@@ -231,7 +231,7 @@ void draw(void)
         a2 = 2 * i;
         a3 = 0;
         if (_ball.x + 1.0 >= a && _ball.x - 1.0 <= a && _ball.y + 1.0+6.0 >= a2 && _ball.y - 1.0+6.0 <= a2){ // on regarde ou se trouve le pacman 
-          if (Bonusx[rst] == 50.0 && Bonusy[rst]== 50.0){
+          if (Bonussx[rst] == 50.0 && Bonussy[rst]== 50.0){
             if (a == 0 || a == 12 || a == - 12 || a2 == 0 || a2 == 12 || a2 == -12){
               if (a == 2 && a2 == 0){
                 flashmod = 1; // quand le pacman prend le bonus du flashmod on active en passant flashmod a 1
@@ -242,8 +242,8 @@ void draw(void)
               scores -= 1; // si le pacman a deja pris le bonus dans la case vide on enleve 1 au score
             }
           }
-          Bonusx[rst] = 50.0; // a l'endroit ou se trouve le pacman on va utiliser le vecteur qu'on a creer dans motheur.h
-          Bonusy[rst] = 50.0; // et on va definir la valeur 50.0 a la position de la case vide ou le pacman se trouve
+          Bonussx[rst] = 50.0; // a l'endroit ou se trouve le pacman on va utiliser le vecteur qu'on a creer dans motheur.h
+          Bonussy[rst] = 50.0; // et on va definir la valeur 50.0 a la position de la case vide ou le pacman se trouve
           if (a == 0 || a == 12 || a == - 12 || a2 == 0 || a2 == 12 || a2 == -12){
             scores += 3;
           }
@@ -251,7 +251,7 @@ void draw(void)
             scores += 1; // on rajoute 1 au score
           }
         }
-        if (Bonusx[rst] != 50.0 && Bonusy[rst]!= 50.0){ // si le la position de la case vide n'est pas = 50.0
+        if (Bonussx[rst] != 50.0 && Bonussy[rst]!= 50.0){ // si le la position de la case vide n'est pas = 50.0
           if (a == 0 || a == 12 || a == - 12 || a2 == 0 || a2 == 12 || a2 == -12){
             if(a==2 && a2 == 0){
               translate(nmv, a, a3, a2); // on va draw le bonus du flashmod
@@ -565,7 +565,7 @@ void draw(void)
   }
 
   for(i = 0; i < 249 ; i++){ // fonction qui va nous permettre de changer de niveau
-    if (Bonusx[i] == 50.0 && Bonusy[i] == 50.0){
+    if (Bonussx[i] == 50.0 && Bonussy[i] == 50.0){
       ct += 1; // on regarde si les bonus on été pris
     }
     if (ct == 249){ // si tous les bonus ont été pris (les 249)
