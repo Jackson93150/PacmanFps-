@@ -4,7 +4,6 @@
 #include "moteur.h"
 #include <GL4D/gl4du.h>
 #include <GL4D/gl4duw_SDL2.h>
-#include <SDL_ttf.h>
 extern unsigned int *labyrinth(int w, int h);
 static void init(void);
 static void draw(void);
@@ -12,6 +11,8 @@ static void key(int keycode);
 static void sortie(void);
 double CubeVx[192]; // vecteur dans lequel on va stocker toute les position x des cubes
 double CubeVy[192]; // vecteur dans lequel on va stocker toute les position y des cubes
+double Bonusx[249]; // on va stocker la position x des bonus
+double Bonusy[249]; // position y des bonus
 double a = 0;
 double a2 = 0;
 double a3 = 0;
